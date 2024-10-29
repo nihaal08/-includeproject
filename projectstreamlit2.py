@@ -23,6 +23,7 @@ nltk.download('punkt', quiet=True)
 nltk.download('stopwords', quiet=True)
 nltk.download('wordnet', quiet=True)
 nltk.download('vader_lexicon', quiet=True)
+nltk.download('punkt_tab', quiet=True)
 
 try:
     STOPWORDS = set(stopwords.words('english'))
