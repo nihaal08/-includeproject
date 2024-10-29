@@ -51,7 +51,7 @@ def load_css():
             }
             .stButton > button {
                 background-color: red;    
-                color: white;             
+                color: black;             
                 border: none;             
                 padding: 10px;           
                 border-radius: 5px;      
