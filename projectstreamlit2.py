@@ -172,7 +172,7 @@ def single_page_scrape(url, page_number):
     try:
         response = requests.get(f"{url}&pageNumber={page_number}", headers=get_request_headers())
         response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'lxml')
+        soup = BeautifulSoup(response.text, 'html.parser')
         boxes = soup.select('div[data-hook="review"]')
         
         for box in boxes:
