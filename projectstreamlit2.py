@@ -61,7 +61,8 @@ def load_css():
                 font-size: 16px;         
             }
             .stButton > button:hover {
-                background-color: red; 
+                background-color: red;
+                color: white;
             }
             .stTextInput > div > input {
                 background-color: black;   
