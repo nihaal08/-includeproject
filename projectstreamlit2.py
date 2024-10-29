@@ -50,7 +50,7 @@ def load_css():
                 color: red;                
             }
             .stButton > button {
-                background-color: red;    
+                background-color: darkred;    
                 color: black;             
                 border: none;             
                 padding: 10px;           
@@ -61,7 +61,7 @@ def load_css():
                 font-size: 16px;         
             }
             .stButton > button:hover {
-                background-color: darkred; 
+                background-color: red; 
             }
             .stTextInput > div > input {
                 background-color: black;   
