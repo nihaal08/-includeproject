@@ -47,10 +47,10 @@ def load_css():
             }
             .stSidebar {
                 background-color: black;  
-                color: red;                
+                color: darkred;                
             }
             .stButton > button {
-                background-color: darkred;    
+                background-color: red;    
                 color: black;             
                 border: none;             
                 padding: 10px;           
