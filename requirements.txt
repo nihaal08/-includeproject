@@ -6,6 +6,5 @@ emoji
 nltk
 matplotlib
 plotly
-sqlite3
 wordcloud
 googletrans==4.0.0-rc1  # This version works well with Google Translate API
