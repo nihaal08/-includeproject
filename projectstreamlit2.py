@@ -64,7 +64,7 @@ def load_css():
             }
             .stTextInput > div > input {
                 background-color: black;   
-                color: yellow;                
+                color: red;                
                 border: 1px solid red;    
             }
             .stTextArea > div > textarea {
