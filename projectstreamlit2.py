@@ -40,7 +40,7 @@ def load_css():
                 font-family: Arial, sans-serif;
             }
             h1, h2, h3, h4, h5, h6 {
-                color: white;               
+                color: red;               
                 text-transform: uppercase; 
             }
             .stSidebar {
@@ -64,7 +64,7 @@ def load_css():
             }
             .stTextInput > div > input {
                 background-color: black;   
-                color: red;                
+                color: yellow;                
                 border: 1px solid red;    
             }
             .stTextArea > div > textarea {
