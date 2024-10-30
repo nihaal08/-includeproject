@@ -46,7 +46,7 @@ def load_css():
             }
             .stSidebar {
                 background-color: black;  
-                color: darkred;                
+                color: #e70b0b;                
             }
             .stButton > button {
                 background-color: red;    
