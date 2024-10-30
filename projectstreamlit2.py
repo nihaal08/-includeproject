@@ -36,7 +36,6 @@ def load_css():
         """
         <style>
             body {
-                background-color: white;
                 color: red;               
                 font-family: Arial, sans-serif;
             }
@@ -49,7 +48,7 @@ def load_css():
                 color: darkred;                
             }
             .stButton > button {
-                background-color: red;    
+                background-color: yellow;    
                 color: white;             
                 border: none;             
                 padding: 10px;           
