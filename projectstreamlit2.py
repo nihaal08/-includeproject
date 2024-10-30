@@ -48,8 +48,8 @@ def load_css():
                 color: darkred;                
             }
             .stButton > button {
-                background-color: yellow;    
-                color: white;             
+                background-color: white;    
+                color: black;             
                 border: none;             
                 padding: 10px;           
                 border-radius: 5px;      
