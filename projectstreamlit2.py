@@ -388,8 +388,8 @@ if st.session_state.page == "User Operations":
                     fig_pie = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'],
                                                        values=sentiment_counts_df['Counts'],
                                                        hole=0.3,
-                                                       marker=dict(colors=['red' if sentiment == 'Positive' 
-                                                                           else 'green' if sentiment == 'Negative' 
+                                                       marker=dict(colors=['green' if sentiment == 'Positive' 
+                                                                           else 'red' if sentiment == 'Negative' 
                                                                            else 'yellow' 
                                                                            for sentiment in sentiment_counts_df['Sentiment']]))])
                     st.plotly_chart(fig_pie)
@@ -479,8 +479,8 @@ if st.session_state.page == "User Operations":
                 fig_pie = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'], 
                                                    values=sentiment_counts_df['Counts'],
                                                    hole=0.3, 
-                                                   marker=dict(colors=['red' if sentiment == 'Positive' 
-                                                                       else 'green' if sentiment == 'Negative'
+                                                   marker=dict(colors=['green' if sentiment == 'Positive' 
+                                                                       else 'red' if sentiment == 'Negative'
                                                                        else 'yellow'
                                                                        for sentiment in sentiment_counts_df['Sentiment']]))])
                 st.plotly_chart(fig_pie)
