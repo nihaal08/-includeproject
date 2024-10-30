@@ -246,19 +246,35 @@ def generate_insights(data):
     insights.append(f"{len(neutral_reviews)} neutral reviews found.")
     return insights
 
+def review_exists(name, title, description):
+    """ Check if a review already exists in the database based on name, title, and description """
+    conn = sqlite3.connect('scraped_sentiment_analysis.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT COUNT(*) FROM scraped_reviews WHERE name = ? AND title = ? AND description = ?
+    ''', (name, title, description))
+    exists = cursor.fetchone()[0] > 0
+    conn.close()
+    return exists
+
 def insert_scraped_review(name, rating, title, description, sentiment, translated_description):
-    try:
-        conn = sqlite3.connect('scraped_sentiment_analysis.db')
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO scraped_reviews (name, rating, title, description, sentiment, translated_description) 
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (name, rating, title, description, sentiment, translated_description))
-        conn.commit()
-    except Exception as e:
-        st.error(f"Error inserting review into scraped_reviews: {e}")
-    finally:
-        conn.close()
+    """ Insert a review into the scraped_reviews table if it doesn't already exist """
+    if not review_exists(name, title, description):
+        try:
+            conn = sqlite3.connect('scraped_sentiment_analysis.db')
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO scraped_reviews (name, rating, title, description, sentiment, translated_description) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (name, rating, title, description, sentiment, translated_description))
+            conn.commit()
+            st.success(f"Inserted review by {name} titled '{title}' into the database.")
+        except Exception as e:
+            st.error(f"Error inserting review into scraped_reviews: {e}")
+        finally:
+            conn.close()
+    else:
+        st.warning(f"Review by {name} titled '{title}' already exists in the database.")
 
 def insert_uploaded_review(product_id, user_id, profile_name, helpfulness_numerator, helpfulness_denominator,
                             score, time, summary, text, sentiment):
