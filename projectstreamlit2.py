@@ -17,12 +17,16 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 from wordcloud import WordCloud
 from googletrans import Translator
+import logging
 
 st.set_page_config(layout="wide")
 nltk.download('punkt', quiet=True)
 nltk.download('stopwords', quiet=True)
 nltk.download('wordnet', quiet=True)
 nltk.download('vader_lexicon', quiet=True)
+
+# Configure logging
+logging.basicConfig(level=logging.ERROR)
 
 try:
     STOPWORDS = set(stopwords.words('english'))
@@ -97,7 +101,7 @@ def load_css():
 
 load_css()
 
-def initialize_scraped_database():
+def initialize_database():
     conn = sqlite3.connect('scraped_sentiment_analysis.db')
     cursor = conn.cursor()
     cursor.execute('''
@@ -114,14 +118,8 @@ def initialize_scraped_database():
     conn.commit()
     conn.close()
 
-def initialize_uploaded_database():
     conn = sqlite3.connect('uploaded_sentiment_analysis.db')
     cursor = conn.cursor()
-    
-    # Drop the existing table if necessary
-    cursor.execute('DROP TABLE IF EXISTS uploaded_reviews')
-
-    # Create a new table with the correct structure
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS uploaded_reviews (
             id INTEGER PRIMARY KEY,
@@ -146,7 +144,8 @@ def translate_text(text, target_language='en'):
         translated = translator.translate(text, dest=target_language)
         return translated.text
     except Exception as e:
-        st.error(f"Translation Error: {e}")
+        logging.error(f"Translation Error: {e}")
+        st.error("We encountered an error translating the text. Please try again.")
         return text
 
 def clean_text(text):
@@ -172,6 +171,7 @@ def single_page_scrape(url, page_number):
         response = requests.get(f"{url}&pageNumber={page_number}", headers=get_request_headers())
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
+
         boxes = soup.select('div[data-hook="review"]')
         
         for box in boxes:
@@ -181,18 +181,15 @@ def single_page_scrape(url, page_number):
                 'Title': box.select_one('[data-hook="review-title"]').text.strip() if box.select_one('[data-hook="review-title"]') else 'N/A',
                 'Description': box.select_one('[data-hook="review-body"]').text.strip() if box.select_one('[data-hook="review-body"]') else 'N/A',
             }
-            review['Title'] = re.sub(r'\d\.\d out of \d stars?', '', review['Title']).strip()
-            review['Description'] = re.sub(r'Read more', '', review['Description'], flags=re.IGNORECASE).strip()
-            review['Description'] = clean_text(review['Description'])
-            
-            # Translate description and log the output
-            review['Translated_Description'] = translate_text(review['Description'], target_language='en')
-            # Analyze sentiment on the translated text directly
+            review['Translated_Description'] = translate_text(review['Description'])
+
+            # Clean and analyze sentiment directly on translated text
             review['Sentiment'] = analyze_sentiment(review['Translated_Description'])
             
             reviews.append(review)
     except requests.exceptions.RequestException as e:
-        st.error(f"Error on page {page_number}: {e}")
+        logging.error(f"Error on page {page_number}: {e}")
+        st.error(f"Error retrieving data from page {page_number}: {e}")
     return reviews
 
 @st.cache_data(show_spinner=False)
@@ -211,7 +208,10 @@ def scrape_reviews(url, pages):
     reviews = filter_unwanted_comments(reviews, unwanted_keywords)
     return reviews
 
+# Initialize necessary components
 lem = WordNetLemmatizer()
+analyzer = SentimentIntensityAnalyzer()
+initialize_database()
 
 @st.cache_data(show_spinner=False)
 def preprocess_text(text):
@@ -221,13 +221,10 @@ def preprocess_text(text):
     cleaned_tokens = [lem.lemmatize(token) for token in tokens if token not in STOPWORDS]
     return ' '.join(cleaned_tokens)
 
-analyzer = SentimentIntensityAnalyzer()
-
 @st.cache_data(show_spinner=False)
 def analyze_sentiment(text):
     sentiment_scores = analyzer.polarity_scores(text)
     compound = sentiment_scores['compound']
-
     if compound > 0.05:
         return 'Positive'
     elif compound < -0.05:
@@ -270,7 +267,8 @@ def insert_scraped_review(name, rating, title, description, sentiment, translate
             conn.commit()
             st.success(f"Inserted review by {name} titled '{title}' into the database.")
         except Exception as e:
-            st.error(f"Error inserting review into scraped_reviews: {e}")
+            logging.error(f"Error inserting review into scraped_reviews: {e}")
+            st.error(f"Error inserting review: {e}")
         finally:
             conn.close()
     else:
@@ -289,7 +287,8 @@ def insert_uploaded_review(product_id, user_id, profile_name, helpfulness_numera
               score, time, summary, text, sentiment))
         conn.commit()
     except Exception as e:
-        st.error(f"Error inserting review into uploaded_reviews: {e}")
+        logging.error(f"Error inserting review into uploaded_reviews: {e}")
+        st.error(f"Error inserting uploaded review: {e}")
     finally:
         conn.close()
 
@@ -302,6 +301,7 @@ def fetch_all_reviews(table_name):
         data = cursor.fetchall()
     except Exception as e:
         st.error(f"Error fetching reviews from {table_name}: {e}")
+        logging.error(f"Error fetching reviews: {e}")
         return []
     finally:
         conn.close()
@@ -321,12 +321,10 @@ def clear_database():
 
         st.success("All reviews have been cleared.")
     except Exception as e:
+        logging.error(f"Error clearing database: {e}")
         st.error(f"Error clearing database: {e}")
     finally:
         conn.close()
-
-initialize_scraped_database()
-initialize_uploaded_database()
 
 def display_navbar():
     st.sidebar.image('logo3.jpg', use_column_width=True)
@@ -386,25 +384,29 @@ if st.session_state.page == "User Operations":
                 if not df_reviews.empty:
                     df_reviews['Processed_Description'] = df_reviews['Description'].apply(preprocess_text)
 
-                    # Analyze sentiment
-                    df_reviews['Sentiment'] = df_reviews['Translated_Description'].apply(analyze_sentiment)
+                    # Analyze sentiment before insertion
+                    df_reviews['Sentiment'] = df_reviews['Processed_Description'].apply(analyze_sentiment)
 
-                    for _, row in df_reviews.iterrows():
+                    unique_reviews = df_reviews.drop_duplicates(subset=['Name', 'Title', 'Description'])
+
+                    for _, row in unique_reviews.iterrows():
                         insert_scraped_review(row['Name'], row['Rating'], row['Title'], 
                                               row['Description'], row['Sentiment'], 
                                               row['Translated_Description'])
 
                     st.write("### SENTIMENT DISTRIBUTION")
-                    sentiment_counts = df_reviews['Sentiment'].value_counts()
+                    sentiment_counts = unique_reviews['Sentiment'].value_counts()
                     sentiment_counts_df = pd.DataFrame(sentiment_counts).reset_index()
                     sentiment_counts_df.columns = ['Sentiment', 'Counts']
+                    sentiment_counts_df['Color'] = ['green' if sentiment == 'Positive' else 'red' for sentiment in sentiment_counts_df['Sentiment']]
 
                     st.write("#### Pie Chart of Sentiment Distribution")
-                    fig_pie = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'], values=sentiment_counts_df['Counts'], hole=0.3)])
+                    fig_pie = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'], values=sentiment_counts_df['Counts'],
+                                                       hole=0.3, marker=dict(colors=sentiment_counts_df['Color']))])
                     st.plotly_chart(fig_pie)
 
-                    positive_reviews_text = ' '.join(df_reviews[df_reviews['Sentiment'] == 'Positive']['Description'])
-                    negative_reviews_text = ' '.join(df_reviews[df_reviews['Sentiment'] == 'Negative']['Description'])
+                    positive_reviews_text = ' '.join(unique_reviews[unique_reviews['Sentiment'] == 'Positive']['Description'])
+                    negative_reviews_text = ' '.join(unique_reviews[unique_reviews['Sentiment'] == 'Negative']['Description'])
 
                     with st.container():
                         st.write("### WORD CLOUD FOR REVIEWS")
@@ -421,7 +423,7 @@ if st.session_state.page == "User Operations":
                                 plt.close()
                             else:
                                 st.write("**No positive reviews available to generate word cloud.**")
-                        
+
                         with col2:
                             st.subheader("Negative Reviews Word Cloud")
                             if negative_reviews_text:
@@ -435,21 +437,20 @@ if st.session_state.page == "User Operations":
                                 st.write("**No negative reviews available to generate word cloud.**")
 
                     st.write("### Bar Chart of Ratings by Sentiment")
-                    rating_count = df_reviews.groupby(['Sentiment', 'Rating']).size().reset_index(name='Counts')
+                    rating_count = unique_reviews.groupby(['Sentiment', 'Rating']).size().reset_index(name='Counts')
                     fig_bar = px.bar(rating_count, x='Rating', y='Counts', color='Sentiment', barmode='group',
                                      title='Bar Chart of Ratings by Sentiment', 
-                                     labels={'Counts': 'Number of Reviews', 'Rating': 'Rating'})
+                                     color_discrete_sequence=['green' if sentiment == 'Positive' else 'red' for sentiment in rating_count['Sentiment']])
                     st.plotly_chart(fig_bar)
 
-                    insights = generate_insights(df_reviews)
+                    insights = generate_insights(unique_reviews)
                     st.write("### INSIGHTS")
                     for insight in insights:
                         st.write(insight)
 
                     # Show the DataFrame with Sentiment as the last column
                     st.write("### SCRAPED REVIEWS WITH SENTIMENT")
-                    st.write(df_reviews[['Name', 'Rating', 'Title', 'Description', 'Translated_Description', 'Sentiment']])
-                    
+                    st.write(unique_reviews[['Name', 'Rating', 'Title', 'Description', 'Translated_Description', 'Sentiment']])
                 else:
                     st.write("**NO REVIEWS FOUND DURING SCRAPING.**")
 
@@ -478,16 +479,18 @@ if st.session_state.page == "User Operations":
                 sentiment_counts = data['Sentiment'].value_counts()
                 sentiment_counts_df = pd.DataFrame(sentiment_counts).reset_index()
                 sentiment_counts_df.columns = ['Sentiment', 'Counts']
+                sentiment_counts_df['Color'] = ['green' if sentiment == 'Positive' else 'red' for sentiment in sentiment_counts_df['Sentiment']]
 
                 st.write("#### Pie Chart of Sentiment Distribution")
-                fig_pie = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'], values=sentiment_counts_df['Counts'], hole=0.3)])
+                fig_pie = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'], values=sentiment_counts_df['Counts'],
+                                                   hole=0.3, marker=dict(colors=sentiment_counts_df['Color']))])
                 st.plotly_chart(fig_pie)
 
                 st.write("### Bar Chart of Scores by Sentiment")
                 score_count = data.groupby(['Sentiment', 'Score']).size().reset_index(name='Counts')
                 fig_bar = px.bar(score_count, x='Score', y='Counts', color='Sentiment', barmode='group',
                                  title='Bar Chart of Scores by Sentiment', 
-                                 labels={'Counts': 'Number of Reviews', 'Score': 'Score'})
+                                 color_discrete_sequence=['green' if sentiment == 'Positive' else 'red' for sentiment in score_count['Sentiment']])
                 st.plotly_chart(fig_bar)
 
                 insights = generate_insights(data)
@@ -510,12 +513,10 @@ if st.session_state.page == "User Operations":
         
         if st.button("TRANSLATE TEXT", key="translate_input"):
             if user_input_text:
-                # Translate user input and log the output
                 translated_text = translate_text(user_input_text, target_language)
                 st.write("### TRANSLATED TEXT")
                 st.write(translated_text)
 
-                # Analyze sentiment on the translated text
                 sentiment_result = analyze_sentiment(translated_text)
                 st.write(f"**SENTIMENT OF TRANSLATED TEXT:** {sentiment_result}")
         
