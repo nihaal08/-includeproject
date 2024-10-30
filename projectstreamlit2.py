@@ -430,8 +430,8 @@ if st.session_state.page == "User Operations":
                     fig_bar = px.bar(rating_count, x='Rating', y='Counts', color='Sentiment', barmode='group',
                                      title='Bar Chart of Ratings by Sentiment', 
                                      color_discrete_map={
-                                         'Positive': 'red',
-                                         'Negative': 'green',
+                                         'Positive': 'green',
+                                         'Negative': 'red',
                                          'Neutral': 'yellow'
                                      },
                                      labels={'Counts': 'Number of Reviews', 'Rating': 'Rating'})
@@ -490,8 +490,8 @@ if st.session_state.page == "User Operations":
                 fig_bar = px.bar(score_count, x='Score', y='Counts', color='Sentiment', barmode='group',
                                  title='Bar Chart of Scores by Sentiment', 
                                  color_discrete_map={
-                                     'Positive': 'red',
-                                     'Negative': 'green',
+                                     'Positive': 'green',
+                                     'Negative': 'red',
                                      'Neutral': 'yellow'
                                  },
                                  labels={'Counts': 'Number of Reviews', 'Score': 'Score'})
