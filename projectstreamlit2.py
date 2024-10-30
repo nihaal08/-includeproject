@@ -265,14 +265,13 @@ def insert_scraped_review(name, rating, title, description, sentiment, translate
                 VALUES (?, ?, ?, ?, ?, ?)
             ''', (name, rating, title, description, sentiment, translated_description))
             conn.commit()
-            st.success(f"Inserted review by {name} titled '{title}' into the database.")
+            return True  # Indicate the review was inserted successfully
         except Exception as e:
             logging.error(f"Error inserting review into scraped_reviews: {e}")
-            st.error(f"Error inserting review: {e}")
+            return False  # Indicate an error occurred
         finally:
             conn.close()
-    else:
-        st.warning(f"Review by {name} titled '{title}' already exists in the database.")
+    return False  # Review already exists
 
 def insert_uploaded_review(product_id, user_id, profile_name, helpfulness_numerator, helpfulness_denominator,
                             score, time, summary, text, sentiment):
@@ -384,73 +383,81 @@ if st.session_state.page == "User Operations":
                 if not df_reviews.empty:
                     df_reviews['Processed_Description'] = df_reviews['Description'].apply(preprocess_text)
 
-                    # Analyze sentiment before insertion
+                    # Analyze sentiment before insertion; only add new unique reviews
                     df_reviews['Sentiment'] = df_reviews['Processed_Description'].apply(analyze_sentiment)
 
-                    unique_reviews = df_reviews.drop_duplicates(subset=['Name', 'Title', 'Description'])
+                    inserted_reviews = []
+                    for _, row in df_reviews.iterrows():
+                        if insert_scraped_review(row['Name'], row['Rating'], row['Title'], 
+                                                  row['Description'], row['Sentiment'], 
+                                                  row['Translated_Description']):
+                            inserted_reviews.append(row)
 
-                    for _, row in unique_reviews.iterrows():
-                        insert_scraped_review(row['Name'], row['Rating'], row['Title'], 
-                                              row['Description'], row['Sentiment'], 
-                                              row['Translated_Description'])
+                    if inserted_reviews:
+                        unique_reviews = pd.DataFrame(inserted_reviews).drop_duplicates(subset=['Name', 'Title', 'Description'])
+                        st.write("### UNIQUE SCRAPED REVIEWS INSERTED")
+                        st.write(unique_reviews)
 
-                    st.write("### SENTIMENT DISTRIBUTION")
-                    sentiment_counts = unique_reviews['Sentiment'].value_counts()
-                    sentiment_counts_df = pd.DataFrame(sentiment_counts).reset_index()
-                    sentiment_counts_df.columns = ['Sentiment', 'Counts']
-                    sentiment_counts_df['Color'] = ['green' if sentiment == 'Positive' else 'red' for sentiment in sentiment_counts_df['Sentiment']]
+                        st.write("### SENTIMENT DISTRIBUTION")
+                        sentiment_counts = unique_reviews['Sentiment'].value_counts()
+                        sentiment_counts_df = pd.DataFrame(sentiment_counts).reset_index()
+                        sentiment_counts_df.columns = ['Sentiment', 'Counts']
+                        sentiment_counts_df['Color'] = ['green' if sentiment == 'Positive' else 'red' for sentiment in sentiment_counts_df['Sentiment']]
 
-                    st.write("#### Pie Chart of Sentiment Distribution")
-                    fig_pie = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'], values=sentiment_counts_df['Counts'],
-                                                       hole=0.3, marker=dict(colors=sentiment_counts_df['Color']))])
-                    st.plotly_chart(fig_pie)
+                        st.write("#### Pie Chart of Sentiment Distribution")
+                        fig_pie = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'], values=sentiment_counts_df['Counts'],
+                                                           hole=0.3, marker=dict(colors=sentiment_counts_df['Color']))])
+                        st.plotly_chart(fig_pie)
 
-                    positive_reviews_text = ' '.join(unique_reviews[unique_reviews['Sentiment'] == 'Positive']['Description'])
-                    negative_reviews_text = ' '.join(unique_reviews[unique_reviews['Sentiment'] == 'Negative']['Description'])
+                        positive_reviews_text = ' '.join(unique_reviews[unique_reviews['Sentiment'] == 'Positive']['Description'])
+                        negative_reviews_text = ' '.join(unique_reviews[unique_reviews['Sentiment'] == 'Negative']['Description'])
 
-                    with st.container():
-                        st.write("### WORD CLOUD FOR REVIEWS")
-                        col1, col2 = st.columns(2)
+                        with st.container():
+                            st.write("### WORD CLOUD FOR REVIEWS")
+                            col1, col2 = st.columns(2)
 
-                        with col1:
-                            st.subheader("Positive Reviews Word Cloud")
-                            if positive_reviews_text:
-                                plt.figure(figsize=(4, 4))
-                                wordcloud_pos = WordCloud(width=200, height=200, background_color='black').generate(positive_reviews_text)
-                                plt.imshow(wordcloud_pos, interpolation='bilinear')
-                                plt.axis('off')
-                                st.pyplot(plt)
-                                plt.close()
-                            else:
-                                st.write("**No positive reviews available to generate word cloud.**")
+                            with col1:
+                                st.subheader("Positive Reviews Word Cloud")
+                                if positive_reviews_text:
+                                    plt.figure(figsize=(4, 4))
+                                    wordcloud_pos = WordCloud(width=200, height=200, background_color='black').generate(positive_reviews_text)
+                                    plt.imshow(wordcloud_pos, interpolation='bilinear')
+                                    plt.axis('off')
+                                    st.pyplot(plt)
+                                    plt.close()
+                                else:
+                                    st.write("**No positive reviews available to generate word cloud.**")
 
-                        with col2:
-                            st.subheader("Negative Reviews Word Cloud")
-                            if negative_reviews_text:
-                                plt.figure(figsize=(4, 4))
-                                wordcloud_neg = WordCloud(width=200, height=200, background_color='black').generate(negative_reviews_text)
-                                plt.imshow(wordcloud_neg, interpolation='bilinear')
-                                plt.axis('off')
-                                st.pyplot(plt)
-                                plt.close()
-                            else:
-                                st.write("**No negative reviews available to generate word cloud.**")
+                            with col2:
+                                st.subheader("Negative Reviews Word Cloud")
+                                if negative_reviews_text:
+                                    plt.figure(figsize=(4, 4))
+                                    wordcloud_neg = WordCloud(width=200, height=200, background_color='black').generate(negative_reviews_text)
+                                    plt.imshow(wordcloud_neg, interpolation='bilinear')
+                                    plt.axis('off')
+                                    st.pyplot(plt)
+                                    plt.close()
+                                else:
+                                    st.write("**No negative reviews available to generate word cloud.**")
 
-                    st.write("### Bar Chart of Ratings by Sentiment")
-                    rating_count = unique_reviews.groupby(['Sentiment', 'Rating']).size().reset_index(name='Counts')
-                    fig_bar = px.bar(rating_count, x='Rating', y='Counts', color='Sentiment', barmode='group',
-                                     title='Bar Chart of Ratings by Sentiment', 
-                                     color_discrete_sequence=['green' if sentiment == 'Positive' else 'red' for sentiment in rating_count['Sentiment']])
-                    st.plotly_chart(fig_bar)
+                        st.write("### Bar Chart of Ratings by Sentiment")
+                        rating_count = unique_reviews.groupby(['Sentiment', 'Rating']).size().reset_index(name='Counts')
+                        fig_bar = px.bar(rating_count, x='Rating', y='Counts', color='Sentiment', barmode='group',
+                                         title='Bar Chart of Ratings by Sentiment', 
+                                         color_discrete_sequence=['green' if sentiment == 'Positive' else 'red' for sentiment in rating_count['Sentiment']])
+                        st.plotly_chart(fig_bar)
 
-                    insights = generate_insights(unique_reviews)
-                    st.write("### INSIGHTS")
-                    for insight in insights:
-                        st.write(insight)
+                        insights = generate_insights(unique_reviews)
+                        st.write("### INSIGHTS")
+                        for insight in insights:
+                            st.write(insight)
 
-                    # Show the DataFrame with Sentiment as the last column
-                    st.write("### SCRAPED REVIEWS WITH SENTIMENT")
-                    st.write(unique_reviews[['Name', 'Rating', 'Title', 'Description', 'Translated_Description', 'Sentiment']])
+                        # Show the DataFrame with Sentiment as the last column
+                        st.write("### SCRAPED REVIEWS WITH SENTIMENT")
+                        st.write(unique_reviews[['Name', 'Rating', 'Title', 'Description', 'Translated_Description', 'Sentiment']])
+                    else:
+                        st.write("**NO UNIQUE REVIEWS INSERTED. ALL REVIEWS WERE DUPLICATES.**")
+
                 else:
                     st.write("**NO REVIEWS FOUND DURING SCRAPING.**")
 
