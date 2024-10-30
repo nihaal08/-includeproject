@@ -40,7 +40,7 @@ def load_css():
                 font-family: Arial, sans-serif;
             }
             h1, h2, h3, h4, h5, h6 {
-                color: red;               
+                color: white;               
                 text-transform: uppercase; 
             }
             .stSidebar {
