@@ -398,12 +398,27 @@ if st.session_state.page == "User Operations":
                     sentiment_counts = unique_reviews['Sentiment'].value_counts()
                     sentiment_counts_df = pd.DataFrame(sentiment_counts).reset_index()
                     sentiment_counts_df.columns = ['Sentiment', 'Counts']
-                    sentiment_counts_df['Color'] = ['green' if sentiment == 'Positive' else 'red' for sentiment in sentiment_counts_df['Sentiment']]
 
                     st.write("#### Pie Chart of Sentiment Distribution")
-                    fig_pie = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'], values=sentiment_counts_df['Counts'],
-                                                       hole=0.3, marker=dict(colors=sentiment_counts_df['Color']))])
+                    fig_pie = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'], 
+                                                       values=sentiment_counts_df['Counts'],
+                                                       hole=0.3, 
+                                                       marker=dict(colors=['green' if sentiment == 'Positive' 
+                                                                           else 'yellow' if sentiment == 'Neutral' 
+                                                                           else 'red' 
+                                                                           for sentiment in sentiment_counts_df['Sentiment']]))])
                     st.plotly_chart(fig_pie)
+
+                    st.write("### Bar Chart of Ratings by Sentiment")
+                    rating_count = unique_reviews.groupby(['Sentiment', 'Rating']).size().reset_index(name='Counts')
+                    fig_bar = px.bar(rating_count, x='Rating', y='Counts', color='Sentiment', barmode='group',
+                                     title='Bar Chart of Ratings by Sentiment',
+                                     color_discrete_map={
+                                         'Positive': 'green',
+                                         'Neutral': 'yellow',
+                                         'Negative': 'red'
+                                     })
+                    st.plotly_chart(fig_bar)
 
                     positive_reviews_text = ' '.join(unique_reviews[unique_reviews['Sentiment'] == 'Positive']['Description'])
                     negative_reviews_text = ' '.join(unique_reviews[unique_reviews['Sentiment'] == 'Negative']['Description'])
@@ -435,13 +450,6 @@ if st.session_state.page == "User Operations":
                                 plt.close()
                             else:
                                 st.write("**No negative reviews available to generate word cloud.**")
-
-                    st.write("### Bar Chart of Ratings by Sentiment")
-                    rating_count = unique_reviews.groupby(['Sentiment', 'Rating']).size().reset_index(name='Counts')
-                    fig_bar = px.bar(rating_count, x='Rating', y='Counts', color='Sentiment', barmode='group',
-                                     title='Bar Chart of Ratings by Sentiment', 
-                                     color_discrete_sequence=['green' if sentiment == 'Positive' else 'red' for sentiment in rating_count['Sentiment']])
-                    st.plotly_chart(fig_bar)
 
                     insights = generate_insights(unique_reviews)
                     st.write("### INSIGHTS")
@@ -479,19 +487,27 @@ if st.session_state.page == "User Operations":
                 sentiment_counts = data['Sentiment'].value_counts()
                 sentiment_counts_df = pd.DataFrame(sentiment_counts).reset_index()
                 sentiment_counts_df.columns = ['Sentiment', 'Counts']
-                sentiment_counts_df['Color'] = ['green' if sentiment == 'Positive' else 'red' for sentiment in sentiment_counts_df['Sentiment']]
 
                 st.write("#### Pie Chart of Sentiment Distribution")
-                fig_pie = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'], values=sentiment_counts_df['Counts'],
-                                                   hole=0.3, marker=dict(colors=sentiment_counts_df['Color']))])
-                st.plotly_chart(fig_pie)
+                fig_pie_uploaded = go.Figure(data=[go.Pie(labels=sentiment_counts_df['Sentiment'], 
+                                                            values=sentiment_counts_df['Counts'],
+                                                            hole=0.3, 
+                                                            marker=dict(colors=['green' if sentiment == 'Positive' 
+                                                                                else 'yellow' if sentiment == 'Neutral'
+                                                                                else 'red'
+                                                                                for sentiment in sentiment_counts_df['Sentiment']]))])
+                st.plotly_chart(fig_pie_uploaded)
 
                 st.write("### Bar Chart of Scores by Sentiment")
                 score_count = data.groupby(['Sentiment', 'Score']).size().reset_index(name='Counts')
-                fig_bar = px.bar(score_count, x='Score', y='Counts', color='Sentiment', barmode='group',
-                                 title='Bar Chart of Scores by Sentiment', 
-                                 color_discrete_sequence=['green' if sentiment == 'Positive' else 'red' for sentiment in score_count['Sentiment']])
-                st.plotly_chart(fig_bar)
+                fig_bar_uploaded = px.bar(score_count, x='Score', y='Counts', color='Sentiment', barmode='group',
+                                          title='Bar Chart of Scores by Sentiment',
+                                          color_discrete_map={
+                                              'Positive': 'green',
+                                              'Neutral': 'yellow',
+                                              'Negative': 'red'
+                                          })
+                st.plotly_chart(fig_bar_uploaded)
 
                 insights = generate_insights(data)
                 st.write("### INSIGHTS")
