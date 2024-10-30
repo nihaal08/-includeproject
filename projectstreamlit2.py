@@ -36,7 +36,7 @@ def load_css():
         """
         <style>
             body {
-                background-color: black;
+                background-color: white;
                 color: red;               
                 font-family: Arial, sans-serif;
             }
@@ -46,7 +46,7 @@ def load_css():
             }
             .stSidebar {
                 background-color: black;  
-                color: #e70b0b;                
+                color: darkred;                
             }
             .stButton > button {
                 background-color: red;    
