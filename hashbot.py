@@ -7,7 +7,7 @@ genai.configure(api_key="AIzaSyABpTOzU6vT8jEljjMRTpbKF3oTSnm7tJg")  # Replace wi
 # Initialize the model
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# Streamlit app layout with updated CSS
+# Streamlit app layout
 st.markdown(
     """
     <style>
@@ -16,6 +16,7 @@ st.markdown(
     }
 
     .title {
+        color:brown;
         font-size: 2.2em;
         font-weight: 600;
         color: #F5F5DC; 
@@ -28,7 +29,8 @@ st.markdown(
         text-align: center;
         padding-bottom: 50px;
     }
-
+    
+    /* Instruction text styling */
     .instructions {
         font-size: 1em;
         color: brown;
@@ -36,15 +38,16 @@ st.markdown(
         margin-bottom: 20px;
     }
 
+    /* Center alignment for button container */
     .button-container {
         display: flex;
         justify-content: center;
         margin-top: 20px;
     }
 
-    .stButton > button {
-        background-color: #F5F5DC; /* Updated background color */
-        color: brown; /* Updated text color */
+    .stButton>button {
+        background-color: #F5F5DC;
+        color: #ffffff;
         justify-content: center;
         font-size: 1em;
         font-weight: 600;
@@ -53,9 +56,9 @@ st.markdown(
         border: none;
         transition: background-color 0.3s ease;
     }
-    .stButton > button:hover {
-        background-color: brown; /* Updated hover background color */
-        color: #F5F5DC; /* Updated hover text color */
+    .stButton>button:hover {
+        background-color: brown;
+        color: #F5F5DC;
     }
     </style>
     """,
