@@ -1,11 +1,2 @@
-streamlit
-lxml
-pandas
-requests
-beautifulsoup4
-emoji
-nltk
-matplotlib
-plotly
-wordcloud
-googletrans==4.0.0-rc1  # This version works well with Google Translate API
+streamlit==1.40.0
+google-generativeai==0.8.3
