@@ -7,20 +7,18 @@ genai.configure(api_key="AIzaSyABpTOzU6vT8jEljjMRTpbKF3oTSnm7tJg")  # Replace wi
 # Initialize the model
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# Streamlit app layout
+# Streamlit app layout with appropriate color scheme
 st.markdown(
     """
     <style>
     body {
-    
         font-family: Arial, sans-serif;
     }
 
     .title {
-        color: black;
         font-size: 2.2em;
         font-weight: 600;
-        color: #F5F5DC; 
+        color: #FFFAF0; /* Off-White for better contrast in light mode */
         text-align: center;
         margin-top: 20px;
     }
@@ -29,12 +27,13 @@ st.markdown(
         font-size: 20px;
         text-align: center;
         padding-bottom: 50px;
+        color: #D3D3D3; /* Light Grey for better contrast */
     }
     
     /* Instruction text styling */
     .instructions {
         font-size: 1em;
-        color: brown;
+        color: #A9A9A9; /* Darker Gray for instructions */
         text-align: center;
         margin-bottom: 20px;
     }
@@ -46,9 +45,9 @@ st.markdown(
         margin-top: 20px;
     }
 
-    .stButton>button {
-        background-color: #F5F5DC;
-        color: #ffffff;
+    .stButton > button {
+        background-color: #F5F5DC; /* Beige for button background */
+        color: #4B0082; /* Indigo for text to maintain contrast */
         justify-content: center;
         font-size: 1em;
         font-weight: 600;
@@ -57,9 +56,9 @@ st.markdown(
         border: none;
         transition: background-color 0.3s ease;
     }
-    .stButton>button:hover {
-        background-color: brown;
-        color: #F5F5DC;
+    .stButton > button:hover {
+        background-color: #8B4513; /* SaddleBrown for hover effect */
+        color: #FFFAF0; /* Off-White for hover text */
     }
     </style>
     """,
