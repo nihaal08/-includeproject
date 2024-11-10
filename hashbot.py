@@ -12,11 +12,12 @@ st.markdown(
     """
     <style>
     body {
+    
         font-family: Arial, sans-serif;
     }
 
     .title {
-        color:brown;
+        color: black;
         font-size: 2.2em;
         font-weight: 600;
         color: #F5F5DC; 
