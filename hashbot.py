@@ -18,7 +18,7 @@ st.markdown(
     .title {
         font-size: 2.2em;
         font-weight: 600;
-        color: #FFFAF0; /* Off-White for better contrast in light mode */
+        color: brown; /* Off-White for better contrast in light mode */
         text-align: center;
         margin-top: 20px;
     }
