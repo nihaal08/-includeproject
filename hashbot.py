@@ -11,24 +11,18 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 st.markdown(
     """
     <style>
-    /* Custom CSS styling inspired by Meta AI design */
-
-    /* Background color for entire app */
     body {
-        background-color: red;
         font-family: Arial, sans-serif;
     }
-    
-    /* Title styling */
+
     .title {
         font-size: 2.2em;
         font-weight: 600;
-        color: #1877f2;  /* Meta blue */
+        color: #F5F5DC; 
         text-align: center;
         margin-top: 20px;
     }
 
-    /* Tagline styling */
     .title1 {
         font-size: 20px;
         text-align: center;
@@ -38,7 +32,7 @@ st.markdown(
     /* Instruction text styling */
     .instructions {
         font-size: 1em;
-        color: #606770; /* Soft gray */
+        color: brown;
         text-align: center;
         margin-bottom: 20px;
     }
@@ -50,9 +44,8 @@ st.markdown(
         margin-top: 20px;
     }
 
-    /* Button styling similar to Meta's button styles */
     .stButton>button {
-        background-color: #1877f2;  /* Meta blue */
+        background-color: #F5F5DC;
         color: #ffffff;
         justify-content: center;
         font-size: 1em;
@@ -63,8 +56,8 @@ st.markdown(
         transition: background-color 0.3s ease;
     }
     .stButton>button:hover {
-        background-color: #165dc9;  /* Darker blue on hover */
-        color: darkblue;
+        background-color: brown;
+        color: #F5F5DC;
     }
     </style>
     """,
